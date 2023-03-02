@@ -1,0 +1,79 @@
+#! /usr/bin/env node
+const yargs = require('yargs/yargs')
+const { hideBin } = require('yargs/helpers')
+const argv = yargs(hideBin(process.argv)).argv
+
+const spinner = require('ora')()
+const exec = require('child_process').exec
+const chalk = require('chalk')
+const prompts = require('prompts')
+const promptsList = require('../prompts')
+const fs = require('fs')
+const path = require('path')
+const mkdirp = require('mkdirp')
+
+const cmd = async (command, message) => {
+    spinner.start(message);
+    await new Promise((resolve, reject) => {
+        exec(command, {}, (error, stdout, stderr) => {
+            if(error) {
+                console.error("\n" + chalk.red.bold(stdout))
+                reject();
+                process.exit(1);
+            }
+            spinner.succeed();
+            resolve();
+        });
+    })
+}
+
+const run = async (file) => {
+    const svgo = __dirname + '/../svgo.config.cjs';
+    await cmd('npx -p figma-export-icons export-icons --config=./.fis/icons-config.json', 'Exporting icons from Figma.')
+    await cmd('npx svgo -f ./.fis -o ./.fis --config ' + svgo, 'Optimizing svg.')
+    await cmd('npx -p svg-sprite-generator svg-sprite-generate -d ./.fis -o ' + file, 'Generating sprite.')
+    await cmd('rm -rf ./.fis', 'Cleaning.')
+}
+
+const ask = async () => {
+    const config = {token: argv.token, id: argv.id, page: argv.page, frame: argv.frame, file: argv.file}
+    const options = promptsList.reduce((acc, prompt) => {
+        if(config[prompt.name] === undefined) { acc.push(prompt) }
+        return acc
+    }, [])
+    const onCancel = _ => process.exit(1)
+    const response = await prompts(options, { onCancel })
+    return Object.assign(config, response)
+}
+
+const configFile = async (responses) => {
+    await createDirectory('.fis');
+    fs.writeFileSync('./.fis/icons-config.json', JSON.stringify({
+        "figmaPersonalToken": responses.token,
+        "fileId": responses.id,
+        "page": responses.page,
+        "frame": responses.frame,
+        "iconsPath": "./.fis/"
+    }, null, 2))
+}
+
+const createDirectory = async(dir) => {
+    return new Promise((resolve) => {
+      const directory = path.resolve(dir)
+      if (!fs.existsSync(directory)) {
+        if (mkdirp.sync(directory)) {
+          resolve()
+        }
+      } else {
+        resolve()
+      }
+    })
+  }
+
+const execute = async () => {
+    const responses = await ask()
+    configFile(responses)
+    run(responses.file)
+}
+
+execute()
