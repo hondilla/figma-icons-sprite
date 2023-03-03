@@ -1,6 +1,6 @@
 {
   "name": "figma-icons-sprite",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Figma icons to svg sprite",
   "main": "index.js",
   "scripts": {
