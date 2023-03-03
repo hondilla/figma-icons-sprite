@@ -28,6 +28,12 @@ const prompts = [
     name: 'file',
     message: 'Sprite name:',
     initial: 'sprite.svg'
+  },
+  {
+    type: 'confirm',
+    name: 'keepIcons',
+    message: 'Keep svg icons:',
+    initial: false
   }
 ]
 

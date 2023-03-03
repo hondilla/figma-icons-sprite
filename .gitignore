@@ -2,3 +2,5 @@ node_modules
 .vscode
 .idea
 .fleet
+#figma-export-icons
+./.fis/icons-config.json
