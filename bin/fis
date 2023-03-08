@@ -31,7 +31,8 @@ const run = async ({keepIcons, file}) => {
     const svgo = __dirname + '/../svgo.config.cjs';
     await cmd('npx -p figma-export-icons export-icons --config=./.fis/icons-config.json', 'Exporting icons from Figma.')
     createDirectory(path.parse(file).dir)
-    const outputSvgo = Boolean(keepIcons) === true ? path.parse(file).dir : './.fis/';
+    let outputSvgo = Boolean(keepIcons) === true ? path.parse(file).dir : './.fis/'
+    outputSvgo = (outputSvgo === '' ? '.' : outputSvgo)
     await cmd('npx svgo -f ./.fis -o ' + outputSvgo + ' --config ' + svgo, 'Optimizing svg.')
     await cmd('npx -p svg-sprite-generator svg-sprite-generate -d ./.fis -o ' + file, 'Generating sprite.')
     fs.rm('./.fis', { recursive: true, force: true }, () => {});
@@ -74,8 +75,20 @@ const createDirectory = async(dir) => {
 
 const execute = async () => {
     const responses = await ask()
-    configFile(responses)
-    run(responses)
+    await configFile(responses)
+    await run(responses)
+    console.log(chalk.red(`\nRerun:`))
+    console.log(
+        chalk.white(`npx`),
+        chalk.blue(`figma-icons-sprite`),
+
+        chalk.bold.green(`--token=${chalk.blue(responses.token)}`),
+        chalk.bold.green(`--id=${chalk.blue(responses.id)}`),
+        chalk.bold.green(`--page=${chalk.blue(responses.page)}`),
+        chalk.bold.green(`--frame=${chalk.blue(responses.frame)}`),
+        chalk.bold.green(`--file=${chalk.blue(responses.file)}`),
+        chalk.bold.green(`--keep-icons=${chalk.blue(responses.keepIcons)}`),
+    )
 }
 
 execute()
